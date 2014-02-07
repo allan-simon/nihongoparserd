@@ -9,7 +9,7 @@ int main(int argc, char* argv[]) {
     //
     setlocale(LC_ALL,"");
 
-    SinoparserServer server(args.listenHost ,args.listenPort );
+    Server server(args.listenHost ,args.listenPort );
 
     return 0;
 }

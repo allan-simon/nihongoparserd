@@ -5,12 +5,12 @@
 
 
 
-class SinoparserServer {
+class Server {
 
 
     public:
-        SinoparserServer(std::string address, int port);
-        ~SinoparserServer();
+        Server(std::string address, int port);
+        ~Server();
 };
 
 

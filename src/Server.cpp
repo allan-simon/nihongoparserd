@@ -92,7 +92,7 @@ static void http_kana_callback(struct evhttp_request *request, void *data) {
  *
  */
 
-SinoparserServer::SinoparserServer(std::string address, int port) {
+Server::Server(std::string address, int port) {
 
     struct event_base *base = event_init();
     struct evhttp *server = evhttp_new(base);
@@ -113,7 +113,7 @@ SinoparserServer::SinoparserServer(std::string address, int port) {
  *
  *
  */
-SinoparserServer::~SinoparserServer() {
+Server::~Server() {
 
 }
 

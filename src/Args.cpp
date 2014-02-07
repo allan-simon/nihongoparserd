@@ -10,8 +10,6 @@ Args::Args(int argc, char *argv[]) {
     default_options();
 
 	struct option long_options[] = {
-		{ "mandarin-data", 1, NULL, 'm' },
-		{ "cantonese-data", 1, NULL, 'c' },
 		{ "listen-host", 1, NULL, 'h' },
 		{ "listen-port", 1, NULL, 'p' },
 		{ "help", 0, NULL, '?' },
@@ -24,18 +22,12 @@ Args::Args(int argc, char *argv[]) {
         (c = getopt_long(
             argc,
             argv,
-            "m:c:h:p:?v",
+            "h:p:?v",
             long_options,
             &option_index
         )) != -1
     ) {
 		switch (c) {
-			case 'c': 
-				GET_ARG_STR(cantoneseDataPath);
-				break;
-			case 'm': 
-				GET_ARG_STR(mandarinDataPath);
-				break;
 			case 'h':
 				GET_ARG_STR(listenHost);
 				break;
@@ -69,8 +61,6 @@ Args::~Args() {
 
 void Args::help() {
 	std::cout << " Options:" << std::endl;
-	std::cout << "  -m, --mandarin-data    Set path of mandarin data file (default empty)" << std::endl;
-	std::cout << "  -c, --cantonese-data   Set path of cantonese data file (default empty)" << std::endl;
 	std::cout << "  -h, --listen-host      Set listening host (default is 0.0.0.0)" << std::endl;
 	std::cout << "  -p, --listen-port      Set listening port (default is 8080)" << std::endl;
 	std::cout << "  -?, --help             Show help options and exit" << std::endl;
@@ -82,7 +72,7 @@ void Args::help() {
  *
  */
 void Args::version() {
-    std::cout << "Sinoparserd 0.1" << std::endl;
+    std::cout << "nihongoparserd 0.1" << std::endl;
 }
 
 /**
@@ -94,3 +84,4 @@ void Args::default_options() {
     cantoneseDataPath = "";
     mandarinDataPath = "";
 }
+
