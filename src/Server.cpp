@@ -1,6 +1,7 @@
-#include "Server.h"
 #include <sys/queue.h>
 #include <evhttp.h>
+#include <mecab.h>
+#include "Server.h"
 
 #define PARSE_URI(request, params) { \
     char const *uri = evhttp_request_uri(request); \
@@ -25,10 +26,10 @@ inline static void output_xml_footer(struct evbuffer *buffer) {
     evbuffer_add_printf(buffer, "</root>\n");
 }
 
-inline static void romanization_output_xml(std::string jyutping, struct evbuffer *buffer) {
-    evbuffer_add_printf(buffer, "<romanization><![CDATA[");
-    evbuffer_add_printf(buffer, "%s", jyutping.c_str());
-    evbuffer_add_printf(buffer, "]]></romanization>\n");
+inline static void kana_output_xml(const char *kana, struct evbuffer *buffer) {
+    evbuffer_add_printf(buffer, "<kana><![CDATA[");
+    evbuffer_add_printf(buffer, "%s", kana);
+    evbuffer_add_printf(buffer, "]]></kana>\n");
 } 
 
 
@@ -71,13 +72,18 @@ static void http_kana_callback(struct evhttp_request *request, void *data) {
     //get "str"
     char const *str;
     PARAM_GET_STR(str, &params_get, "str", true);
-    std::string jyutping(str);
+
+    //we parse into kana
+    Server* server = (Server*) data;
+    const char *kana = server->yomiTagger->parse(str);
+
+    //TODO add error handling
 
     //prepare output
     struct evbuffer *buffer = evbuffer_new();
 
     output_xml_header(buffer);
-    romanization_output_xml(jyutping, buffer);
+    kana_output_xml(kana, buffer);
     output_xml_footer(buffer);
 
     //send
@@ -98,6 +104,9 @@ Server::Server(std::string address, int port) {
     struct evhttp *server = evhttp_new(base);
     int res = evhttp_bind_socket(server, address.c_str(), port);
 
+    wakatiTagger = MeCab::createTagger("-Owakati");
+    yomiTagger = MeCab::createTagger("-Oyomi");
+
     if (res != 0) {
         std::cout <<  "[ERROR] Could not start http server!" << std::endl;
         return;
@@ -114,6 +123,8 @@ Server::Server(std::string address, int port) {
  *
  */
 Server::~Server() {
+    delete wakatiTagger;
+    delete yomiTagger;
 
 }
 

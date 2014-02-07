@@ -20,4 +20,5 @@ target_link_libraries(
     stdc++
     expat
     event
+    mecab
 )
