@@ -32,6 +32,11 @@ inline static void kana_output_xml(const char *kana, struct evbuffer *buffer) {
     evbuffer_add_printf(buffer, "]]></kana>\n");
 } 
 
+inline static void parse_output_xml(const char *parse, struct evbuffer *buffer) {
+    evbuffer_add_printf(buffer, "<parse><![CDATA[");
+    evbuffer_add_printf(buffer, "%s", parse);
+    evbuffer_add_printf(buffer, "]]></parse>\n");
+}
 
 
 
@@ -93,6 +98,42 @@ static void http_kana_callback(struct evhttp_request *request, void *data) {
 
 }
 
+/**** uri: /parse?str=*
+ *
+ */
+static void http_parse_callback(struct evhttp_request *request, void *data) {
+
+    //parse uri
+    struct evkeyvalq params_get;
+    PARSE_URI(request, params_get);
+
+
+    //get "str"
+    char const *str;
+    PARAM_GET_STR(str, &params_get, "str", true);
+
+    //we parse into kana
+    Server* server = (Server*) data;
+    const char *parse = server->wakatiTagger->parse(str);
+
+    //TODO add error handling
+
+    //prepare output
+    struct evbuffer *buffer = evbuffer_new();
+
+    output_xml_header(buffer);
+    parse_output_xml(parse, buffer);
+    output_xml_footer(buffer);
+
+    //send
+    evhttp_add_header(request->output_headers, "Content-Type", "TEXT/XML; charset=UTF8");
+
+    evhttp_send_reply(request, HTTP_OK, "", buffer);
+
+}
+
+
+
 
 /**
  *
@@ -114,6 +155,7 @@ Server::Server(std::string address, int port) {
 
     evhttp_set_gencb(server, http_callback_default, this);
     evhttp_set_cb(server, "/kana", http_kana_callback, this);
+    evhttp_set_cb(server, "/parse", http_parse_callback, this);
 
     event_base_dispatch(base);
 }
