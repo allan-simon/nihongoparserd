@@ -1,4 +1,5 @@
 #include <vector>
+#include <map>
 #include <sys/queue.h>
 #include <evhttp.h>
 #include <mecab.h>
@@ -39,6 +40,14 @@ inline static void parse_output_xml_header(struct evbuffer *buffer) {
 
 inline static void parse_output_xml_footer(struct evbuffer *buffer) {
     evbuffer_add_printf(buffer, "</parse>\n");
+}
+
+inline static void furigana_output_xml_header(struct evbuffer *buffer) {
+    evbuffer_add_printf(buffer, "<furigana>");
+}
+
+inline static void furigana_output_xml_footer(struct evbuffer *buffer) {
+    evbuffer_add_printf(buffer, "</furigana>\n");
 }
 
 inline static void token_output_xml(const char *token, struct evbuffer *buffer) {
@@ -124,7 +133,6 @@ static void http_parse_callback(struct evhttp_request *request, void *data) {
 
     //we parse into kana
     Server* server = (Server*) data;
-    const char *parse = server->wakatiTagger->parse(str);
 
     std::vector<std::string> tokens;
     const MeCab::Node* node = server->tagger->parseToNode(str);
@@ -156,6 +164,61 @@ static void http_parse_callback(struct evhttp_request *request, void *data) {
 
 }
 
+/**** uri: /furigana?str=*
+ *
+ */
+static void http_furigana_callback(struct evhttp_request *request, void *data) {
+
+    //parse uri
+    struct evkeyvalq params_get;
+    PARSE_URI(request, params_get);
+
+
+    //get "str"
+    char const *str;
+    PARAM_GET_STR(str, &params_get, "str", true);
+
+    //we parse into furigana => token+kana 
+    Server* server = (Server*) data;
+
+    std::vector<std::pair<std::string, const char*> > furiganas;
+    const MeCab::Node* node = server->tagger->parseToNode(str); for (; node; node = node->next) {
+        if (node->stat != MECAB_BOS_NODE && node->stat != MECAB_EOS_NODE) {
+            std::string token(node->surface, node->length);
+            furiganas.push_back(std::pair<std::string, const char*>(
+                token,
+                server->yomiTagger->parse(token.c_str()) // kana
+            ));
+        }
+    }
+
+    //TODO add error handling
+
+    //prepare output
+    struct evbuffer *buffer = evbuffer_new();
+
+    output_xml_header(buffer);
+    parse_output_xml_header(buffer);
+
+    for (auto& oneFurigana : furiganas) {
+        furigana_output_xml_header(buffer);
+        token_output_xml(oneFurigana.first.c_str(), buffer);
+        kana_output_xml(oneFurigana.second, buffer);
+
+        furigana_output_xml_footer(buffer);
+    }
+
+    parse_output_xml_footer(buffer);
+    output_xml_footer(buffer);
+
+    //send
+    evhttp_add_header(request->output_headers, "Content-Type", "TEXT/XML; charset=UTF8");
+
+    evhttp_send_reply(request, HTTP_OK, "", buffer);
+
+}
+
+
 
 
 
@@ -181,6 +244,7 @@ Server::Server(std::string address, int port) {
     evhttp_set_gencb(server, http_callback_default, this);
     evhttp_set_cb(server, "/kana", http_kana_callback, this);
     evhttp_set_cb(server, "/parse", http_parse_callback, this);
+    evhttp_set_cb(server, "/furigana", http_furigana_callback, this);
 
     event_base_dispatch(base);
 }
