@@ -181,13 +181,15 @@ static void http_furigana_callback(struct evhttp_request *request, void *data) {
     //we parse into furigana => token+kana 
     Server* server = (Server*) data;
 
-    std::vector<std::pair<std::string, const char*> > furiganas;
+    std::vector<std::pair<std::string, std::string> > furiganas;
     const MeCab::Node* node = server->tagger->parseToNode(str); for (; node; node = node->next) {
         if (node->stat != MECAB_BOS_NODE && node->stat != MECAB_EOS_NODE) {
             std::string token(node->surface, node->length);
-            furiganas.push_back(std::pair<std::string, const char*>(
+            std::string kana(server->yomiTagger->parse(token.c_str()));
+
+            furiganas.push_back(std::pair<std::string, std::string>(
                 token,
-                server->yomiTagger->parse(token.c_str()) // kana
+                kana
             ));
         }
     }
@@ -203,7 +205,7 @@ static void http_furigana_callback(struct evhttp_request *request, void *data) {
     for (auto& oneFurigana : furiganas) {
         furigana_output_xml_header(buffer);
         token_output_xml(oneFurigana.first.c_str(), buffer);
-        kana_output_xml(oneFurigana.second, buffer);
+        kana_output_xml(oneFurigana.second.c_str(), buffer);
 
         furigana_output_xml_footer(buffer);
     }
