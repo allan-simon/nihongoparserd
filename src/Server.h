@@ -14,6 +14,7 @@ class Server {
         // TODO : I know it's bad, shame on me
         MeCab::Tagger* wakatiTagger;
         MeCab::Tagger* yomiTagger;
+        MeCab::Tagger* tagger;
 
         Server(std::string address, int port);
         ~Server();

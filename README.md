@@ -11,6 +11,8 @@ for the moment it's based on libmecab but it may be replaced by homebrew parser 
   * libevent
   * libmecab2
 
+a C++11 compatible compiler
+
 ### Usage ###
 
     ./nihonggoparserd -p PORT

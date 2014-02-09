@@ -1,3 +1,4 @@
+#include <vector>
 #include <sys/queue.h>
 #include <evhttp.h>
 #include <mecab.h>
@@ -32,11 +33,20 @@ inline static void kana_output_xml(const char *kana, struct evbuffer *buffer) {
     evbuffer_add_printf(buffer, "]]></kana>\n");
 } 
 
-inline static void parse_output_xml(const char *parse, struct evbuffer *buffer) {
-    evbuffer_add_printf(buffer, "<parse><![CDATA[");
-    evbuffer_add_printf(buffer, "%s", parse);
-    evbuffer_add_printf(buffer, "]]></parse>\n");
+inline static void parse_output_xml_header(struct evbuffer *buffer) {
+    evbuffer_add_printf(buffer, "<parse>");
 }
+
+inline static void parse_output_xml_footer(struct evbuffer *buffer) {
+    evbuffer_add_printf(buffer, "</parse>\n");
+}
+
+inline static void token_output_xml(const char *token, struct evbuffer *buffer) {
+    evbuffer_add_printf(buffer, "<token><![CDATA[");
+    evbuffer_add_printf(buffer, "%s",token);
+    evbuffer_add_printf(buffer, "]]></token>\n");
+}
+
 
 
 
@@ -116,13 +126,27 @@ static void http_parse_callback(struct evhttp_request *request, void *data) {
     Server* server = (Server*) data;
     const char *parse = server->wakatiTagger->parse(str);
 
+    std::vector<std::string> tokens;
+    const MeCab::Node* node = server->tagger->parseToNode(str);
+    for (; node; node = node->next) {
+        if (node->stat != MECAB_BOS_NODE && node->stat != MECAB_EOS_NODE) {
+            tokens.push_back(std::string(node->surface, node->length));
+        }
+    }
+
     //TODO add error handling
 
     //prepare output
     struct evbuffer *buffer = evbuffer_new();
 
     output_xml_header(buffer);
-    parse_output_xml(parse, buffer);
+    parse_output_xml_header(buffer);
+
+    for (auto& oneToken : tokens) {
+        token_output_xml(oneToken.c_str(), buffer);
+    }
+
+    parse_output_xml_footer(buffer);
     output_xml_footer(buffer);
 
     //send
@@ -147,6 +171,7 @@ Server::Server(std::string address, int port) {
 
     wakatiTagger = MeCab::createTagger("-Owakati");
     yomiTagger = MeCab::createTagger("-Oyomi");
+    tagger = MeCab::createTagger("");
 
     if (res != 0) {
         std::cout <<  "[ERROR] Could not start http server!" << std::endl;
@@ -167,6 +192,7 @@ Server::Server(std::string address, int port) {
 Server::~Server() {
     delete wakatiTagger;
     delete yomiTagger;
+    delete tagger;
 
 }
 
