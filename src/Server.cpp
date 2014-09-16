@@ -3,6 +3,7 @@
 #include <sys/queue.h>
 #include <evhttp.h>
 #include <mecab.h>
+#include "Kana.h"
 #include "Server.h"
 
 #define PARSE_URI(request, params) { \
@@ -107,7 +108,8 @@ static void http_kana_callback(struct evhttp_request *request, void *data) {
     struct evbuffer *buffer = evbuffer_new();
 
     output_xml_header(buffer);
-    kana_output_xml(kana, buffer);
+    std::string enforcedHiranagas = server->kana.KatakanaToHiragana(kana);
+    kana_output_xml(enforcedHiranagas.c_str(), buffer);
     output_xml_footer(buffer);
 
     //send
@@ -205,7 +207,8 @@ static void http_furigana_callback(struct evhttp_request *request, void *data) {
     for (auto& oneFurigana : furiganas) {
         furigana_output_xml_header(buffer);
         token_output_xml(oneFurigana.first.c_str(), buffer);
-        kana_output_xml(oneFurigana.second.c_str(), buffer);
+        std::string enforcedHiranagas = server->kana.KatakanaToHiragana(oneFurigana.second);
+        kana_output_xml(enforcedHiranagas.c_str(), buffer);
 
         furigana_output_xml_footer(buffer);
     }

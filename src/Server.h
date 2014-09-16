@@ -1,6 +1,8 @@
 #ifndef SINOPARSER_SERVER_H
 #define SINOPARSER_SERVER_H
 
+#include "Kana.h"
+
 #include <iostream>
 
 namespace MeCab {
@@ -15,6 +17,7 @@ class Server {
         MeCab::Tagger* wakatiTagger;
         MeCab::Tagger* yomiTagger;
         MeCab::Tagger* tagger;
+        Kana kana;
 
         Server(std::string address, int port);
         ~Server();
