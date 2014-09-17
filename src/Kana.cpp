@@ -32,7 +32,8 @@ const char Kana::hiraganas[][4] = {
 
 Kana::Kana() {
     /* Initialize the katakana to hiragana hash table. */
-    for (int i = 0; i < sizeof(Kana::katakanas); i++) {
+    static size_t numKanas = sizeof(Kana::katakanas)/sizeof(Kana::katakanas[0]);
+    for (int i = 0; i < numKanas; i++) {
         uint32_t katakana = *(uint32_t*)Kana::katakanas[i];
         uint32_t hiragana = *(uint32_t*)Kana::hiraganas[i];
         Kana::KataToHiraTable.insert(std::make_pair(katakana, hiragana));
