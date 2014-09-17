@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <cstring>
 #include <vector>
 #include <map>
 #include <sys/queue.h>
@@ -179,6 +180,22 @@ static void clean_furigana(Kana *kana, std::string token, std::string &furigana)
    }
 }
 
+static std::string mecab_node_get_reading(const MeCab::Node *node) {
+#define MECAB_FEATURE_READING_FIELD 8
+    size_t field = 0;
+    char *token, *infos = strdupa(node->feature);
+
+    token = strtok(infos, ",");
+    while (token != NULL) {
+      field++;
+      if (field == MECAB_FEATURE_READING_FIELD) {
+          return std::string(token);
+      }
+      token = strtok(NULL, ",");
+    }
+    return "";
+}
+
 /**** uri: /furigana?str=*
  *
  */
@@ -200,7 +217,7 @@ static void http_furigana_callback(struct evhttp_request *request, void *data) {
     const MeCab::Node* node = server->tagger->parseToNode(str); for (; node; node = node->next) {
         if (node->stat != MECAB_BOS_NODE && node->stat != MECAB_EOS_NODE) {
             std::string token(node->surface, node->length);
-            std::string kana(server->yomiTagger->parse(token.c_str()));
+            std::string kana(mecab_node_get_reading(node));
             clean_furigana(&server->kana, token, kana);
 
             furiganas.push_back(std::pair<std::string, std::string>(
