@@ -12,7 +12,7 @@ class Kana {
 
   public:
     Kana();
-    std::string KatakanaToHiragana(std::string katakana);
+    std::string katakana_to_hiragana(std::string katakana);
 };
 
 #endif

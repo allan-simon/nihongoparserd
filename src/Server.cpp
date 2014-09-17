@@ -108,7 +108,7 @@ static void http_kana_callback(struct evhttp_request *request, void *data) {
     struct evbuffer *buffer = evbuffer_new();
 
     output_xml_header(buffer);
-    std::string enforcedHiranagas = server->kana.KatakanaToHiragana(kana);
+    std::string enforcedHiranagas = server->kana.katakana_to_hiragana(kana);
     kana_output_xml(enforcedHiranagas.c_str(), buffer);
     output_xml_footer(buffer);
 
@@ -207,7 +207,7 @@ static void http_furigana_callback(struct evhttp_request *request, void *data) {
     for (auto& oneFurigana : furiganas) {
         furigana_output_xml_header(buffer);
         token_output_xml(oneFurigana.first.c_str(), buffer);
-        std::string enforcedHiranagas = server->kana.KatakanaToHiragana(oneFurigana.second);
+        std::string enforcedHiranagas = server->kana.katakana_to_hiragana(oneFurigana.second);
         kana_output_xml(enforcedHiranagas.c_str(), buffer);
 
         furigana_output_xml_footer(buffer);

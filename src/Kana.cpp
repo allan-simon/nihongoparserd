@@ -1,6 +1,6 @@
 
 #include <cstring>
-#include <stdint.h>
+#include <cstdint>
 
 #include "Kana.h"
 
@@ -40,7 +40,7 @@ Kana::Kana() {
 }
 
 /* Very naive UTF-8 parsing implementation. */
-static int utf8_getc(const char **str, char *character, int character_len) {
+static int utf8_getc(const char **str, char *character, int characterLen) {
     /* mask values for bit pattern of first byte in multi-byte
      * UTF-8 sequences: 
      *   192 - 110xxxxx - for U+0080 to U+07FF 
@@ -50,8 +50,9 @@ static int utf8_getc(const char **str, char *character, int character_len) {
     const unsigned short mask[] = {192, 224, 240};
     int i;
 
-    for (i = 0; i < character_len; i++)
+    for (i = 0; i < characterLen; i++) {
         character[i] = '\0';
+    }
 
     character[0] = **str;
     for (i = 0;
@@ -67,14 +68,13 @@ static int utf8_getc(const char **str, char *character, int character_len) {
     return (character[0] != '\0');
 }
 
-std::string Kana::KatakanaToHiragana(std::string katakana) {
+std::string Kana::katakana_to_hiragana(std::string katakana) {
     const char *str = katakana.c_str();
     char character[5] = { '\0' }; /* 4 UTF-8 bytes + '\0' = 5 */
     std::string hiraganas;
 
     while (utf8_getc(&str, character, sizeof(character)-1)) {
-        std::unordered_map<uint32_t, uint32_t>::const_iterator
-            res = Kana::KataToHiraTable.find(*(uint32_t*)character);
+        auto res = Kana::KataToHiraTable.find(*(uint32_t*)character);
         if (res != Kana::KataToHiraTable.end()) {
             std::memcpy(character, &res->second, sizeof(character)-1);
         }
