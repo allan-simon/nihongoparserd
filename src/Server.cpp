@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <vector>
 #include <map>
 #include <sys/queue.h>
@@ -166,6 +167,18 @@ static void http_parse_callback(struct evhttp_request *request, void *data) {
 
 }
 
+static inline void remove_spaces(std::string &str) {
+   str.erase(std::remove_if(str.begin(), str.end(), (int(*)(int))std::isspace), str.end());
+}
+
+static void clean_furigana(Kana *kana, std::string token, std::string &furigana) {
+   remove_spaces(furigana);
+   furigana = kana->katakana_to_hiragana(furigana);
+   if (kana->katakana_to_hiragana(token) == furigana) {
+       furigana = "";
+   }
+}
+
 /**** uri: /furigana?str=*
  *
  */
@@ -188,6 +201,7 @@ static void http_furigana_callback(struct evhttp_request *request, void *data) {
         if (node->stat != MECAB_BOS_NODE && node->stat != MECAB_EOS_NODE) {
             std::string token(node->surface, node->length);
             std::string kana(server->yomiTagger->parse(token.c_str()));
+            clean_furigana(&server->kana, token, kana);
 
             furiganas.push_back(std::pair<std::string, std::string>(
                 token,
@@ -207,8 +221,7 @@ static void http_furigana_callback(struct evhttp_request *request, void *data) {
     for (auto& oneFurigana : furiganas) {
         furigana_output_xml_header(buffer);
         token_output_xml(oneFurigana.first.c_str(), buffer);
-        std::string enforcedHiranagas = server->kana.katakana_to_hiragana(oneFurigana.second);
-        kana_output_xml(enforcedHiranagas.c_str(), buffer);
+        kana_output_xml(oneFurigana.second.c_str(), buffer);
 
         furigana_output_xml_footer(buffer);
     }
