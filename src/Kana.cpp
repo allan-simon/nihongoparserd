@@ -47,7 +47,7 @@ static int utf8_getc(const char **str, char *character, int characterLen) {
      *   224 - 1110xxxx - for U+0800 to U+FFFF 
      *   240 - 11110xxx - for U+010000 to U+1FFFFF
      */
-    const unsigned short mask[] = {192, 224, 240};
+    const unsigned short mask[] = {255, 192, 224, 240};
     int i;
 
     for (i = 0; i < characterLen; i++) {
@@ -55,13 +55,14 @@ static int utf8_getc(const char **str, char *character, int characterLen) {
     }
 
     character[0] = **str;
-    for (i = 0;
-         i < 3 && i+1 < character_len && **str != '\0'
-         && (character[0] & mask[i]) == mask[i];
-         i++)
-    {
+    for (
+         i = 1;
+         i < 4 && i < characterLen && **str != '\0'
+              && (character[0] & mask[i]) == mask[i];
+         i++
+    ) {
         (*str)++;
-        character[i+1] = **str;
+        character[i] = **str;
     }
     (*str)++;
 
