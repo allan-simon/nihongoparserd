@@ -2,6 +2,7 @@
 #define SINOPARSER_SERVER_H
 
 #include "Kana.h"
+#include "Kanji.h"
 
 #include <iostream>
 
@@ -18,6 +19,7 @@ class Server {
         MeCab::Tagger* yomiTagger;
         MeCab::Tagger* tagger;
         Kana kana;
+        Kanji kanji;
 
         Server(std::string address, int port);
         ~Server();

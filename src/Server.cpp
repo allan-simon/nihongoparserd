@@ -6,6 +6,7 @@
 #include <evhttp.h>
 #include <mecab.h>
 #include "Kana.h"
+#include "Kanji.h"
 #include "Server.h"
 
 #define PARSE_URI(request, params) { \
@@ -220,10 +221,13 @@ static void http_furigana_callback(struct evhttp_request *request, void *data) {
             std::string kana(mecab_node_get_reading(node));
             clean_furigana(&server->kana, token, kana);
 
-            furiganas.push_back(std::pair<std::string, std::string>(
-                token,
-                kana
-            ));
+            std::vector<std::pair<std::string, std::string> > smallerTokens;
+            smallerTokens = server->kanji.tokenize_kanjis(token, kana);
+            furiganas.insert(
+                furiganas.end(),
+                smallerTokens.begin(),
+                smallerTokens.end()
+            );
         }
     }
 
