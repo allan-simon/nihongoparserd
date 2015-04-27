@@ -1,8 +1,7 @@
 #ifndef SINOPARSER_SERVER_H
 #define SINOPARSER_SERVER_H
 
-#include "Kana.h"
-#include "Kanji.h"
+#include "Furigana.h"
 
 #include <iostream>
 
@@ -18,8 +17,7 @@ class Server {
         MeCab::Tagger* wakatiTagger;
         MeCab::Tagger* yomiTagger;
         MeCab::Tagger* tagger;
-        Kana kana;
-        Kanji kanji;
+        Furigana furigana;
 
         Server(std::string address, int port);
         ~Server();
