@@ -42,6 +42,10 @@ Furigana::Furigana() {
     }
 }
 
+/**
+ * Return the given string with katakanas converted
+ * to their hiragana equivalents.
+ */
 std::string Furigana::katakana_to_hiragana(std::string katakana)
 {
     const char *str = katakana.c_str();
@@ -64,6 +68,11 @@ static inline void remove_spaces(std::string &str) {
    str.erase(std::remove_if(str.begin(), str.end(), (int(*)(int))std::isspace), str.end());
 }
 
+/**
+ * Given two strings, check if they start with the same characters. If so,
+ * return the length (in bytes) of equal part, or zero otherwise.
+ * Return zero if the strings are equal.
+ */
 static size_t find_initial_equal_chars(char *kanjis_start, char *reading_start)
 {
     const char *kanjis  = (const char*) kanjis_start;
@@ -88,6 +97,10 @@ static size_t find_initial_equal_chars(char *kanjis_start, char *reading_start)
     return kanjis_prev - kanjis_start;
 }
 
+/**
+ * Find how much we should trim the given reading and kanji strings.
+ * Returns the length of head and tail to trim.
+ */
 static void find_trim_boundaries(
         std::string kanjis_std, std::string reading_std,
         size_t *start_len, size_t *end_len)
@@ -103,6 +116,10 @@ static void find_trim_boundaries(
     free(reading);
 }
 
+/**
+ * Split the given strings into one, two, or three parts, giving the
+ * provided head and tail length.
+ */
 static std::vector<std::pair<std::string, std::string> >
         split_furigana(std::string kanjisString, std::string readingString,
                        int start_len, int end_len)
@@ -127,6 +144,9 @@ static std::vector<std::pair<std::string, std::string> >
     return tokens;
 }
 
+/**
+ * Removes useless furiganas at the beginning and at the end.
+ */
 std::vector<std::pair<std::string, std::string> >
         Furigana::tokenize(std::string kanjisString, std::string readingString)
 {
