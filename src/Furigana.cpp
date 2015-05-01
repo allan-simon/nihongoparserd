@@ -64,8 +64,15 @@ std::string Furigana::katakana_to_hiragana(std::string katakana)
     return hiraganas;
 }
 
-static inline void remove_spaces(std::string &str) {
-   str.erase(std::remove_if(str.begin(), str.end(), (int(*)(int))std::isspace), str.end());
+static inline void remove_spaces(std::string &str)
+{
+    str.erase(
+        std::remove_if(
+            str.begin(),
+            str.end(),
+            (int(*)(int))std::isspace),
+        str.end()
+    );
 }
 
 /**
@@ -85,7 +92,7 @@ static size_t find_initial_equal_chars(char *kanjis_start, char *reading_start)
         return 0;
     }
 
-    while (1) {
+    while (true) {
         kanjis_prev = kanjis;
         int more_kanjis  = utf8_getc(&kanjis, kanji_char, sizeof(kanji_char)-1);
         int more_reading = utf8_getc(&reading, kana_char, sizeof(kana_char)-1);
@@ -102,9 +109,11 @@ static size_t find_initial_equal_chars(char *kanjis_start, char *reading_start)
  * Returns the length of head and tail to trim.
  */
 static void find_trim_boundaries(
-        std::string kanjis_std, std::string reading_std,
-        size_t *start_len, size_t *end_len)
-{
+    std::string kanjis_std,
+    std::string reading_std,
+    size_t *start_len,
+    size_t *end_len
+) {
     char *kanjis  = strdup(kanjis_std.c_str());
     char *reading = strdup(reading_std.c_str());
 
@@ -120,10 +129,12 @@ static void find_trim_boundaries(
  * Split the given strings into one, two, or three parts, giving the
  * provided head and tail length.
  */
-static std::vector<std::pair<std::string, std::string> >
-        split_furigana(std::string kanjisString, std::string readingString,
-                       int start_len, int end_len)
-{
+static std::vector<std::pair<std::string, std::string> > split_furigana(
+    std::string kanjisString,
+    std::string readingString,
+    int start_len,
+    int end_len
+) {
     std::vector<std::pair<std::string, std::string> > tokens;
     tokens.push_back(std::pair<std::string, std::string>(
         kanjisString.substr(start_len, kanjisString.length() - end_len - start_len),
@@ -147,17 +158,23 @@ static std::vector<std::pair<std::string, std::string> >
 /**
  * Removes useless furiganas at the beginning and at the end.
  */
-std::vector<std::pair<std::string, std::string> >
-        Furigana::tokenize(std::string kanjisString, std::string readingString)
-{
+std::vector<std::pair<std::string, std::string> > Furigana::tokenize(
+    std::string kanjisString,
+    std::string readingString
+) {
     size_t start_len, end_len;
 
     remove_spaces(readingString);
     readingString = this->katakana_to_hiragana(readingString);
-    find_trim_boundaries(this->katakana_to_hiragana(kanjisString), readingString,
-                         &start_len, &end_len);
+    find_trim_boundaries(this->katakana_to_hiragana(kanjisString),
+                         readingString,
+                         &start_len,
+                         &end_len);
 
-    auto tokens = split_furigana(kanjisString, readingString, start_len, end_len);
+    auto tokens = split_furigana(kanjisString,
+                                 readingString,
+                                 start_len,
+                                 end_len);
 
     for (auto& text : tokens) {
         if (this->katakana_to_hiragana(text.first) == text.second) {
