@@ -48,10 +48,17 @@ inline static void cdata_output_xml(const char *string, struct evbuffer *buffer)
     evbuffer_add_printf(buffer, "<![CDATA[%s]]>", string);
 }
 
-inline static void reading_output_xml(std::pair<std::string, std::string> text,
-                                      struct evbuffer *buffer) {
-    evbuffer_add_printf(buffer, "<reading furigana=\"%s\"><![CDATA[%s]]></reading>",
-                        text.second.c_str(), text.first.c_str());
+inline static void reading_output_xml(
+    std::pair<std::string,
+    std::string> text,
+    struct evbuffer *buffer
+) {
+    evbuffer_add_printf(
+        buffer,
+        "<reading furigana=\"%s\"><![CDATA[%s]]></reading>",
+        text.second.c_str(),
+        text.first.c_str()
+    );
 }
 
 inline static void token_output_xml_header(struct evbuffer *buffer) {

@@ -137,14 +137,21 @@ static std::vector<std::pair<std::string, std::string> > split_furigana(
 ) {
     std::vector<std::pair<std::string, std::string> > tokens;
     tokens.push_back(std::pair<std::string, std::string>(
-        kanjisString.substr(start_len, kanjisString.length() - end_len - start_len),
-        readingString.substr(start_len, readingString.length() - end_len - start_len)
+        kanjisString.substr(
+            start_len, kanjisString.length() - end_len - start_len
+        ),
+        readingString.substr(
+            start_len, readingString.length() - end_len - start_len
+        )
     ));
     if (start_len > 0) {
-        tokens.insert(tokens.begin(), std::pair<std::string, std::string>(
-            kanjisString.substr(0, start_len),
-            readingString.substr(0, start_len)
-        ));
+        tokens.insert(
+            tokens.begin(),
+            std::pair<std::string, std::string>(
+                kanjisString.substr(0, start_len),
+                readingString.substr(0, start_len)
+            )
+        );
     }
     if (end_len > 0) {
         tokens.push_back(std::pair<std::string, std::string>(
@@ -166,15 +173,19 @@ std::vector<std::pair<std::string, std::string> > Furigana::tokenize(
 
     remove_spaces(readingString);
     readingString = this->katakana_to_hiragana(readingString);
-    find_trim_boundaries(this->katakana_to_hiragana(kanjisString),
-                         readingString,
-                         &start_len,
-                         &end_len);
+    find_trim_boundaries(
+        this->katakana_to_hiragana(kanjisString),
+        readingString,
+        &start_len,
+        &end_len
+    );
 
-    auto tokens = split_furigana(kanjisString,
-                                 readingString,
-                                 start_len,
-                                 end_len);
+    auto tokens = split_furigana(
+        kanjisString,
+        readingString,
+        start_len,
+        end_len
+    );
 
     for (auto& text : tokens) {
         if (this->katakana_to_hiragana(text.first) == text.second) {
