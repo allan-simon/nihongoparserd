@@ -1,11 +1,10 @@
-#include <algorithm>
 #include <cstring>
 #include <vector>
 #include <map>
 #include <sys/queue.h>
 #include <evhttp.h>
 #include <mecab.h>
-#include "Kana.h"
+#include "Furigana.h"
 #include "Server.h"
 
 #define PARSE_URI(request, params) { \
@@ -38,19 +37,36 @@ inline static void kana_output_xml(const char *kana, struct evbuffer *buffer) {
 } 
 
 inline static void parse_output_xml_header(struct evbuffer *buffer) {
-    evbuffer_add_printf(buffer, "<parse>");
+    evbuffer_add_printf(buffer, "<parse>\n");
 }
 
 inline static void parse_output_xml_footer(struct evbuffer *buffer) {
     evbuffer_add_printf(buffer, "</parse>\n");
 }
 
-inline static void furigana_output_xml_header(struct evbuffer *buffer) {
-    evbuffer_add_printf(buffer, "<furigana>");
+inline static void cdata_output_xml(const char *string, struct evbuffer *buffer) {
+    evbuffer_add_printf(buffer, "<![CDATA[%s]]>", string);
 }
 
-inline static void furigana_output_xml_footer(struct evbuffer *buffer) {
-    evbuffer_add_printf(buffer, "</furigana>\n");
+inline static void reading_output_xml(
+    std::pair<std::string,
+    std::string> text,
+    struct evbuffer *buffer
+) {
+    evbuffer_add_printf(
+        buffer,
+        "<reading furigana=\"%s\"><![CDATA[%s]]></reading>",
+        text.second.c_str(),
+        text.first.c_str()
+    );
+}
+
+inline static void token_output_xml_header(struct evbuffer *buffer) {
+    evbuffer_add_printf(buffer, "<token>");
+}
+
+inline static void token_output_xml_footer(struct evbuffer *buffer) {
+    evbuffer_add_printf(buffer, "</token>\n");
 }
 
 inline static void token_output_xml(const char *token, struct evbuffer *buffer) {
@@ -110,7 +126,7 @@ static void http_kana_callback(struct evhttp_request *request, void *data) {
     struct evbuffer *buffer = evbuffer_new();
 
     output_xml_header(buffer);
-    std::string enforcedHiranagas = server->kana.katakana_to_hiragana(kana);
+    std::string enforcedHiranagas = server->furigana.katakana_to_hiragana(kana);
     kana_output_xml(enforcedHiranagas.c_str(), buffer);
     output_xml_footer(buffer);
 
@@ -168,18 +184,6 @@ static void http_parse_callback(struct evhttp_request *request, void *data) {
 
 }
 
-static inline void remove_spaces(std::string &str) {
-   str.erase(std::remove_if(str.begin(), str.end(), (int(*)(int))std::isspace), str.end());
-}
-
-static void clean_furigana(Kana *kana, std::string token, std::string &furigana) {
-   remove_spaces(furigana);
-   furigana = kana->katakana_to_hiragana(furigana);
-   if (kana->katakana_to_hiragana(token) == furigana) {
-       furigana = "";
-   }
-}
-
 static std::string mecab_node_get_reading(const MeCab::Node *node) {
 #define MECAB_FEATURE_READING_FIELD 8
     size_t field = 0;
@@ -213,17 +217,18 @@ static void http_furigana_callback(struct evhttp_request *request, void *data) {
     //we parse into furigana => token+kana 
     Server* server = (Server*) data;
 
-    std::vector<std::pair<std::string, std::string> > furiganas;
+    std::vector< std::vector<std::pair<std::string, std::string> > > tokens;
     const MeCab::Node* node = server->tagger->parseToNode(str); for (; node; node = node->next) {
         if (node->stat != MECAB_BOS_NODE && node->stat != MECAB_EOS_NODE) {
             std::string token(node->surface, node->length);
             std::string kana(mecab_node_get_reading(node));
-            clean_furigana(&server->kana, token, kana);
 
-            furiganas.push_back(std::pair<std::string, std::string>(
-                token,
-                kana
-            ));
+            std::vector<std::pair<std::string, std::string> > smallerTokens;
+            smallerTokens = server->furigana.tokenize(token, kana);
+            tokens.insert(
+                tokens.end(),
+                smallerTokens
+            );
         }
     }
 
@@ -235,12 +240,16 @@ static void http_furigana_callback(struct evhttp_request *request, void *data) {
     output_xml_header(buffer);
     parse_output_xml_header(buffer);
 
-    for (auto& oneFurigana : furiganas) {
-        furigana_output_xml_header(buffer);
-        token_output_xml(oneFurigana.first.c_str(), buffer);
-        kana_output_xml(oneFurigana.second.c_str(), buffer);
-
-        furigana_output_xml_footer(buffer);
+    for (auto& readings : tokens) {
+        token_output_xml_header(buffer);
+        for (auto& text : readings) {
+            if (text.second.empty()) {
+                cdata_output_xml(text.first.c_str(), buffer);
+            } else {
+                reading_output_xml(text, buffer);
+            }
+        }
+        token_output_xml_footer(buffer);
     }
 
     parse_output_xml_footer(buffer);
