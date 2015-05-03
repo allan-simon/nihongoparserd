@@ -75,10 +75,6 @@ inline static void token_output_xml(const char *token, struct evbuffer *buffer) 
     evbuffer_add_printf(buffer, "]]></token>\n");
 }
 
-
-
-
-
 /**
  *
  */
@@ -261,10 +257,6 @@ static void http_furigana_callback(struct evhttp_request *request, void *data) {
     evhttp_send_reply(request, HTTP_OK, "", buffer);
 
 }
-
-
-
-
 
 /**
  *
