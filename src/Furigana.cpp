@@ -1,7 +1,6 @@
 
 #include <cstring>
 #include <algorithm>
-#include <string.h>
 
 #include "Furigana.h"
 #include "Utf8.h"
