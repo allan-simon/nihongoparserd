@@ -3,8 +3,6 @@
 #include <map>
 #include <sys/queue.h>
 #include <evhttp.h>
-#include <mecab.h>
-#include "Furigana.h"
 #include "Server.h"
 
 #define PARSE_URI(request, params) { \
@@ -114,7 +112,7 @@ static void http_kana_callback(struct evhttp_request *request, void *data) {
 
     //we parse into kana
     Server* server = (Server*) data;
-    const char *kana = server->yomiTagger->parse(str);
+    const char *kana = server->parser.yomiTagger->parse(str);
 
     //TODO add error handling
 
@@ -122,7 +120,7 @@ static void http_kana_callback(struct evhttp_request *request, void *data) {
     struct evbuffer *buffer = evbuffer_new();
 
     output_xml_header(buffer);
-    std::string enforcedHiranagas = server->furigana.katakana_to_hiragana(kana);
+    std::string enforcedHiranagas = server->parser.furigana.katakana_to_hiragana(kana);
     kana_output_xml(enforcedHiranagas.c_str(), buffer);
     output_xml_footer(buffer);
 
@@ -150,13 +148,7 @@ static void http_parse_callback(struct evhttp_request *request, void *data) {
     //we parse into kana
     Server* server = (Server*) data;
 
-    std::vector<std::string> tokens;
-    const MeCab::Node* node = server->tagger->parseToNode(str);
-    for (; node; node = node->next) {
-        if (node->stat != MECAB_BOS_NODE && node->stat != MECAB_EOS_NODE) {
-            tokens.push_back(std::string(node->surface, node->length));
-        }
-    }
+    auto tokens = server->parser.tokenize(str);
 
     //TODO add error handling
 
@@ -167,7 +159,7 @@ static void http_parse_callback(struct evhttp_request *request, void *data) {
     parse_output_xml_header(buffer);
 
     for (auto& oneToken : tokens) {
-        token_output_xml(oneToken.c_str(), buffer);
+        token_output_xml(oneToken.first.c_str(), buffer);
     }
 
     parse_output_xml_footer(buffer);
@@ -178,22 +170,6 @@ static void http_parse_callback(struct evhttp_request *request, void *data) {
 
     evhttp_send_reply(request, HTTP_OK, "", buffer);
 
-}
-
-static std::string mecab_node_get_reading(const MeCab::Node *node) {
-#define MECAB_FEATURE_READING_FIELD 8
-    size_t field = 0;
-    char *token, *infos = strdupa(node->feature);
-
-    token = strtok(infos, ",");
-    while (token != NULL) {
-      field++;
-      if (field == MECAB_FEATURE_READING_FIELD) {
-          return std::string(token);
-      }
-      token = strtok(NULL, ",");
-    }
-    return "";
 }
 
 /**** uri: /furigana?str=*
@@ -214,18 +190,17 @@ static void http_furigana_callback(struct evhttp_request *request, void *data) {
     Server* server = (Server*) data;
 
     std::vector< std::vector<std::pair<std::string, std::string> > > tokens;
-    const MeCab::Node* node = server->tagger->parseToNode(str); for (; node; node = node->next) {
-        if (node->stat != MECAB_BOS_NODE && node->stat != MECAB_EOS_NODE) {
-            std::string token(node->surface, node->length);
-            std::string kana(mecab_node_get_reading(node));
+    std::vector<std::pair<std::string, std::string> > basic_tokens = server->parser.tokenize(str);
+    for (auto& oneToken : basic_tokens) {
+        std::string token(oneToken.first);
+        std::string kana(oneToken.second);
 
-            std::vector<std::pair<std::string, std::string> > smallerTokens;
-            smallerTokens = server->furigana.tokenize(token, kana);
-            tokens.insert(
-                tokens.end(),
-                smallerTokens
-            );
-        }
+        std::vector<std::pair<std::string, std::string> > smallerTokens;
+        smallerTokens = server->parser.furigana.tokenize(token, kana);
+        tokens.insert(
+            tokens.end(),
+            smallerTokens
+        );
     }
 
     //TODO add error handling
@@ -268,10 +243,6 @@ Server::Server(std::string address, int port) {
     struct evhttp *server = evhttp_new(base);
     int res = evhttp_bind_socket(server, address.c_str(), port);
 
-    wakatiTagger = MeCab::createTagger("-Owakati");
-    yomiTagger = MeCab::createTagger("-Oyomi");
-    tagger = MeCab::createTagger("");
-
     if (res != 0) {
         std::cout <<  "[ERROR] Could not start http server!" << std::endl;
         return;
@@ -284,15 +255,3 @@ Server::Server(std::string address, int port) {
 
     event_base_dispatch(base);
 }
-
-/**
- *
- *
- */
-Server::~Server() {
-    delete wakatiTagger;
-    delete yomiTagger;
-    delete tagger;
-
-}
-
