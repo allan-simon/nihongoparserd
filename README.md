@@ -28,18 +28,22 @@ URL: `/parse?str=*`
 
 Example of response for `/parse?str=学校は家から遠いの？`
 
-    <?xml version="1.0" encoding="UTF-8"?>
-    <root>
+```xml
+
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
     <parse>
-    <token>学校</token>
-    <token>は</token>
-    <token>家</token>
-    <token>から</token>
-    <token>遠い</token>
-    <token>の</token>
-    <token>？</token>
+        <token>学校</token>
+        <token>は</token>
+        <token>家</token>
+        <token>から</token>
+        <token>遠い</token>
+        <token>の</token>
+        <token>？</token>
     </parse>
-    </root>
+</root>
+
+```
 
 #### Furigana ####
 
@@ -47,18 +51,28 @@ URL: `/furigana?str=*`
 
 Example of response for `/furigana?str=学校は家から遠いの？`
 
-    <?xml version="1.0" encoding="UTF-8"?>
-    <root>
+```xml
+
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
     <parse>
-    <token><reading furigana="がっこう">学校</reading></token>
-    <token>は</token>
-    <token><reading furigana="いえ">家</reading></token>
-    <token>から</token>
-    <token><reading furigana="とお">遠></reading>い</token>
-    <token>の</token>
-    <token>？</token>
+       <token>
+           <reading furigana="がっこう">学校</reading>
+       </token>
+       <token>は</token>
+       <token>
+           <reading furigana="いえ">家</reading>
+       </token>
+       <token>から</token>
+       <token>
+           <reading furigana="とお">遠></reading>
+           い
+       </token>
+       <token>の</token>
+       <token>？</token>
     </parse>
-    </root>
+</root>
+```
 
 #### Kana ####
 
@@ -66,10 +80,12 @@ URL: `/kana?str=*`
 
 Example of rensponse for `/kana?str=学校は家から遠いの？`
 
-    <?xml version="1.0" encoding="UTF-8"?>
-    <root>
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
     <kana>がっこうはいえからとおいの？</kana>
-    </root>
+</root>
+```
 
 ### Compile it
 
