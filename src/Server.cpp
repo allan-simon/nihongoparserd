@@ -78,6 +78,11 @@ inline static void token_output_xml(const char *token, struct evbuffer *buffer) 
  */
 static void http_send(struct evhttp_request *request, const char *fmt, ...) {
     struct evbuffer *buffer = evbuffer_new();
+    if (!buffer) {
+        std::cerr <<  "[ERROR] Could not allocate new evbuffer." << std::endl;
+        return;
+    }
+
     evhttp_add_header(request->output_headers, "Content-Type", "TEXT/XML; charset=UTF8");
     va_list ap;
     va_start(ap, fmt);
@@ -118,6 +123,10 @@ static void http_kana_callback(struct evhttp_request *request, void *data) {
 
     //prepare output
     struct evbuffer *buffer = evbuffer_new();
+    if (!buffer) {
+        std::cerr <<  "[ERROR] Could not allocate new evbuffer." << std::endl;
+        return;
+    }
 
     output_xml_header(buffer);
     std::string enforcedHiranagas = server->parser.furigana.katakana_to_hiragana(kana);
@@ -129,6 +138,7 @@ static void http_kana_callback(struct evhttp_request *request, void *data) {
 
     evhttp_send_reply(request, HTTP_OK, "", buffer);
 
+    evbuffer_free(buffer);
 }
 
 /**** uri: /parse?str=*
@@ -154,6 +164,10 @@ static void http_parse_callback(struct evhttp_request *request, void *data) {
 
     //prepare output
     struct evbuffer *buffer = evbuffer_new();
+    if (!buffer) {
+        std::cerr <<  "[ERROR] Could not allocate new evbuffer." << std::endl;
+        return;
+    }
 
     output_xml_header(buffer);
     parse_output_xml_header(buffer);
@@ -170,6 +184,7 @@ static void http_parse_callback(struct evhttp_request *request, void *data) {
 
     evhttp_send_reply(request, HTTP_OK, "", buffer);
 
+    evbuffer_free(buffer);
 }
 
 /**** uri: /furigana?str=*
@@ -207,6 +222,10 @@ static void http_furigana_callback(struct evhttp_request *request, void *data) {
 
     //prepare output
     struct evbuffer *buffer = evbuffer_new();
+    if (!buffer) {
+        std::cerr <<  "[ERROR] Could not allocate new evbuffer." << std::endl;
+        return;
+    }
 
     output_xml_header(buffer);
     parse_output_xml_header(buffer);
@@ -231,6 +250,7 @@ static void http_furigana_callback(struct evhttp_request *request, void *data) {
 
     evhttp_send_reply(request, HTTP_OK, "", buffer);
 
+    evbuffer_free(buffer);
 }
 
 /**
@@ -244,7 +264,7 @@ Server::Server(std::string address, int port) {
     int res = evhttp_bind_socket(server, address.c_str(), port);
 
     if (res != 0) {
-        std::cout <<  "[ERROR] Could not start http server!" << std::endl;
+        std::cerr <<  "[ERROR] Could not start http server!" << std::endl;
         return;
     }
 
