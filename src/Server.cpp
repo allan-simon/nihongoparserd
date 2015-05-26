@@ -138,6 +138,7 @@ static void http_kana_callback(struct evhttp_request *request, void *data) {
 
     evhttp_send_reply(request, HTTP_OK, "", buffer);
 
+    evhttp_clear_headers(&params_get);
     evbuffer_free(buffer);
 }
 
@@ -184,6 +185,7 @@ static void http_parse_callback(struct evhttp_request *request, void *data) {
 
     evhttp_send_reply(request, HTTP_OK, "", buffer);
 
+    evhttp_clear_headers(&params_get);
     evbuffer_free(buffer);
 }
 
@@ -250,6 +252,7 @@ static void http_furigana_callback(struct evhttp_request *request, void *data) {
 
     evhttp_send_reply(request, HTTP_OK, "", buffer);
 
+    evhttp_clear_headers(&params_get);
     evbuffer_free(buffer);
 }
 
