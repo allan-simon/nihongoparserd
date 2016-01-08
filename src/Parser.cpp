@@ -117,15 +117,31 @@ static std::string mecab_node_get_field(
     int wanted_field
 ) {
     size_t field = 0;
-    char *token, *infos = strdupa(node->feature);
+    char *token = strdupa(node->feature);
 
-    token = strtok(infos, ",");
     while (token != NULL) {
-        field++;
+        char *next = NULL;
+
+        if (*token == '"') {
+            char *closing_quote = strchr(token + 1, '"');
+            if (closing_quote && closing_quote[1] == ',') {
+                next = closing_quote + 1;
+                token++; // skip opening quote
+                *closing_quote = '\0'; // remove closing quote
+            }
+        }
+        if (!next)
+            next = strchr(token, ',');
+        if (next) {
+            *next = '\0';
+            next++;
+        }
+
         if (field == wanted_field) {
             return std::string(token);
         }
-        token = strtok(NULL, ",");
+        field++;
+        token = next;
     }
     return "";
 }
