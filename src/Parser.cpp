@@ -116,7 +116,7 @@ static std::string mecab_node_get_field(
     const MeCab::Node *node,
     int wanted_field
 ) {
-    size_t field = 0;
+    size_t field = 1;
     char *token = strdupa(node->feature);
 
     while (token != NULL) {
